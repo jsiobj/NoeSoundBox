@@ -53,3 +53,9 @@ void setPWMFreq() {
   TCCR5B = TCCR5B & B11111000 | B00000001;    // set timer 5 divisor to     1 for PWM frequency of 31372.55 Hz
 
 }
+
+int hex2dec(char hex) {
+    char hexKey[]= { '0', 'x', '0', 0 };
+    hexKey[2]=hex;                         // Building an hex number...
+    return strtol(hexKey,0,16);            // ... so it can be converted to an int
+}

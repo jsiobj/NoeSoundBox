@@ -1,6 +1,8 @@
 /*
     PIANO mode related code.
 */
+#define DEBUG
+#include "debug.h"
 
 #include <Keypad.h>
 #include <Wire.h> 
@@ -10,13 +12,19 @@
 #include <Adafruit_VS1053.h>
 #include <SD.h>
 #include <avr/wdt.h>
+#include <ClickEncoder>
+#include <TimerOne.h>
 
 #include <InteractingObjects_ButtonPad.h>
+
+#include "NoJuBo.h"
 #include "midi.h"
 #include "globals.h"
+#include "misc.h"
 
 int midiCurrentMap=-1;
 int pianoVolume=127;
+byte pianoOptionList[]={0,1,2,3,4,5,6,7,8,9}; // List of available button options for Piano mode, end with 255
 
 // Channel mapping : which bank / instrument on which channel (up to 4 channels)
 // Looks like 
@@ -106,12 +114,21 @@ int midiMaps[][16][2] =  {
   }
 };
 
+byte* pianoGetOptionList(int* size) {
+  DEBUG_PRINT_ARRAY(pianoOptionList,"pianoOptionList",ARRAY_LENGTH(pianoOptionList));
+  *size=ARRAY_LENGTH(pianoOptionList);
+  return pianoOptionList;
+}
+
 void initPiano(int option) {
     
-    Serial.println(F("VS1053 in MIDI mode"));
+    DEBUG_PRINT("Setting VS1053 in MIDI mode");
+    digitalWrite(LED_PIANO,HIGH);
+    digitalWrite(BOOT_M0DE_PIN,HIGH); // Setting pin connected to GPIO1 and VS1053 to HIGH...
+    VS1053.reset();                   // ... and resetting
 
     Serial3.begin(31250);
-    midiSetChannelVolume(0, 127);
+    midiSetChannelVolume(0, pianoVolume);
     
     for(int i=0;i<MIDI_MAX_CHANNEL;i++) {
       Serial.print("Channel:");Serial.print(i);
@@ -156,7 +173,7 @@ void onKeyReleasedPiano(int keyCode) {
   byte row=keyCode/4;
   byte col=keyCode%4;
 
-  midiNoteOff(midiMaps[midiCurrentMap][keyCode][0], midiMaps[midiCurrentMap][keyCode][1], pianoVolume);
+  //midiNoteOff(midiMaps[midiCurrentMap][keyCode][0], midiMaps[midiCurrentMap][keyCode][1], pianoVolume);
   
   if(ledMatrix.matrixLedGetLockState(row,col)==OFF && ledMatrix.matrixLedGetState(row,col)==ON) {
     ledMatrix.matrixLedToggleState(row,col,standardColors[4]); 
@@ -167,33 +184,77 @@ void onKeyReleasedPiano(int keyCode) {
 // What to do in MIDI mode
 //=================================================================================
 void loopPiano() {
+
+  long lastToggle;
+//  int volKnobOldPos=0;
+//  boolean restart=false;
+
+  DEBUG_PRINTF("Volume:%d",pianoVolume);
   
-  // At least one key state changed i.e. a key was pressed or released
-  if (customKeypad.getKeys()){
+  while(1) {
     
-    for (int i=0; i<LIST_MAX; i++)  {
-        if ( customKeypad.key[i].stateChanged ) {
+    // Controlling volume  
+    long volKnobMove = encoder->getValue();
+    if (volKnobMove) {
+      pianoVolume=pianoVolume+volKnobMove;
+      if(pianoVolume<0) pianoVolume=0; if(pianoVolume>127) pianoVolume=127;
+      //volKnobOldPos = volKnobNewPos;
+      // TODO : set master volume
+      for(int i=0;i<MIDI_MAX_CHANNEL;i++) midiSetChannelVolume(i, pianoVolume);
+      DEBUG_PRINTF("Volume set to %d",pianoVolume);
+      
+      int red,green,blue;
+      
+      if(pianoVolume>64) {
+        red=256-(pianoVolume-64)*4;
+        green=(pianoVolume-64)*4;
+        blue=255;
+      }
+      else {
+        red=255;
+        green=(64-pianoVolume)*4;
+        blue=256-(64-pianoVolume)*4;
+      }
+      DEBUG_PRINTF3("RGB:%3d,%3d,%3d",red,green,blue);
+      analogWrite(ENCODER_RED,red);
+      analogWrite(ENCODER_GREEN,green);
+      analogWrite(ENCODER_BLUE,blue);
+    }      
 
-          switch (customKeypad.key[i].kstate) {  // Report active key state : IDLE, PRESSED, HOLD, or RELEASED
-                case PRESSED:
-                  onKeyPressedPiano(customKeypad.key[i].kcode);
-                  break;
-                
-                case HOLD:
-                  onKeyHoldPiano(customKeypad.key[i].kcode);
-                  break;
-                
-                case RELEASED:
-                  onKeyReleasedPiano(customKeypad.key[i].kcode);
-                  break;
-                
-                case IDLE:
-                  break;
+    // If player button pressed, pausing...
+    if(digitalRead(BTN_PIANO)==LOW) {
+      while(digitalRead(BTN_PIANO)==LOW) 1;
+      DEBUG_PRINT("Restarting piano");
+      boxOption=-1;
+      break;
+    }
+  
+    // At least one key state changed i.e. a key was pressed or released
+    if (customKeypad.getKeys()){
+      
+      for (int i=0; i<LIST_MAX; i++)  {
+          if ( customKeypad.key[i].stateChanged ) {
+  
+            switch (customKeypad.key[i].kstate) {  // Report active key state : IDLE, PRESSED, HOLD, or RELEASED
+                  case PRESSED:
+                    onKeyPressedPiano(customKeypad.key[i].kcode);
+                    break;
+                  
+                  case HOLD:
+                    onKeyHoldPiano(customKeypad.key[i].kcode);
+                    break;
+                  
+                  case RELEASED:
+                    onKeyReleasedPiano(customKeypad.key[i].kcode);
+                    break;
+                  
+                  case IDLE:
+                    break;
+            }
           }
-        }
-     }
+       }
+    }
+  
+    ledMatrix.matrixLedRefresh();
   }
-
-  ledMatrix.matrixLedRefresh();
-   
-}
+ }

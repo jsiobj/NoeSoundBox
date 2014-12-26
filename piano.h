@@ -9,5 +9,6 @@ void onKeyPressedPiano(int keyCode);
 void onKeyHoldPiano(int keyCode);
 void onKeyReleasedPiano(int keyCode);
 void loopPiano();
+byte* pianoGetOptionList(int* size);
 
 #endif
