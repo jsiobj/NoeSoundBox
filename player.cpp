@@ -259,7 +259,7 @@ void loopPlayer(int option) {
     // Controlling volume  
     long volKnobMove = encoder->getValue();
     if (volKnobMove) {
-      volume=volume+volKnobMove;
+      volume=volume-volKnobMove;
       if(volume<0) volume=0; if(volume>254) volume=254;
       musicPlayer.setVolume(volume,volume);   // Left and right channel volume (lower number mean louder)
       DEBUG_PRINTF("Volume set to %d",volume);
