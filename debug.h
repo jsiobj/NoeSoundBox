@@ -82,6 +82,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #else
   #define DEBUG_PRINT(str)
   #define DEBUG_PRINTF(str,val)
+  #define DEBUG_PRINTF2(str,val)
+  #define DEBUG_PRINTF3(str,val)
   #define DEBUG_PRINT_ARRAY(array,arrayName,arraySize)
 #endif
 

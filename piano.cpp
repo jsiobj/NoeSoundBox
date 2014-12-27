@@ -44,11 +44,18 @@ int midiChannelMaps[MIDI_MAX_CHANNEL][2] = {
 int midiMaps[][16][2] =  {
   
   // 0 : Simple notes on channel 1
-  { {0,72},{0,74},{0,76},{0,77},
+  { {0,77},{0,76},{0,74},{0,72},
+    {0,84},{0,83},{0,81},{0,79},
+    {0,91},{0,89},{0,88},{0,86},
+    {0,98},{0,96},{0,95},{0,93}
+  },
+
+  // 0 : Simple notes on channel 1
+  /*{ {0,72},{0,74},{0,76},{0,77},
     {0,79},{0,81},{0,83},{0,84},
     {0,86},{0,88},{0,89},{0,91},
     {0,93},{0,95},{0,96},{0,98}
-  },
+  },*/
 
   // 1 : Simple notes on channel 1
   { {1,72},{1,74},{1,76},{1,77},
@@ -148,12 +155,14 @@ void initPiano(int option) {
 
 //-------------------------------------------------------------------------
 void onKeyPressedPiano(int keyCode) {
-  byte row=keyCode/4;
-  byte col=keyCode%4;
+  byte row=KEY2ROW(keyCode);
+  byte col=KEY2COL(keyCode);
 
-  Serial.print("Map:"); Serial.print(midiCurrentMap);Serial.print("|Key:");Serial.print(keyCode);
-  Serial.print("|Bank:");Serial.print(midiMaps[midiCurrentMap][keyCode][0]);
-  Serial.print("|Note:");Serial.println(midiMaps[midiCurrentMap][keyCode][1]);
+  DEBUG_PRINTF3("-- Key:%2d| row:%2d| col:%2d",keyCode,row,col);
+  //DEBUG_PRINTF2("   Addr2:  div:%2d|mod:%d",keyCode/ROWS,keyCode%COLS);
+  //DEBUG_PRINTF2("   Addr3:  div:%2d|mod:%d",KEY2ROW(keyCode),KEY2COL(keyCode));
+  DEBUG_PRINTF2("   Addr:   row:%2d|col:%d",ROW2ADDR(row),COL2ADDR(col));
+  DEBUG_PRINTF3("   Map:%d|Bank:%d|Note:%d",midiCurrentMap,midiMaps[midiCurrentMap][keyCode][0],midiMaps[midiCurrentMap][keyCode][1]); 
   
   ledMatrix.matrixLedSetRandom(row,col);  
   midiNoteOn(midiMaps[midiCurrentMap][keyCode][0], midiMaps[midiCurrentMap][keyCode][1], pianoVolume);
@@ -161,8 +170,8 @@ void onKeyPressedPiano(int keyCode) {
 
 //-------------------------------------------------------------------------
 void onKeyHoldPiano(int keyCode) {
-  byte row=keyCode/4;
-  byte col=keyCode%4;
+  byte row=KEY2ROW(keyCode);
+  byte col=KEY2COL(keyCode);
 
   if(ledMatrix.matrixLedGetState(row,col)==ON) ledMatrix.matrixLedLock(row,col);  
 
@@ -170,8 +179,8 @@ void onKeyHoldPiano(int keyCode) {
 
 //-------------------------------------------------------------------------
 void onKeyReleasedPiano(int keyCode) {
-  byte row=keyCode/4;
-  byte col=keyCode%4;
+  byte row=KEY2ROW(keyCode);
+  byte col=KEY2COL(keyCode);
 
   //midiNoteOff(midiMaps[midiCurrentMap][keyCode][0], midiMaps[midiCurrentMap][keyCode][1], pianoVolume);
   

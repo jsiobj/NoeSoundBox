@@ -4,7 +4,7 @@
   All In One test program
 */
 
-//#define DEBUG
+#define DEBUG
 #include "debug.h"
 
 #include <Keypad.h>           // For keypad management
@@ -61,6 +61,12 @@ char hexaKeys[ROWS][COLS] = {
   {'8', '9', 'A', 'B'},
   {'C', 'D', 'E', 'F'}
 };
+/*char hexaKeys[ROWS][COLS] = {
+  {'3', '2', '1', '0'},
+  {'7', '6', '5', '4'},
+  {'B', 'A', '9', '8'},
+  {'F', 'E', 'D', 'C'}
+};*/
 
 byte pinBtn[ROWS]       = {22,23,24,25}; // Buttons rows
 byte pinBtnGnd[COLS]    = {26,28,30,32}; // Buttons cols
@@ -333,12 +339,12 @@ void loop() {
         char hexKey[]= { '0', 'x', '0', 0 };
         hexKey[2]=customKey; 
         byte key = strtol(hexKey,0,16);
-        byte row=key/ROWS; byte col=key%COLS;
+        byte row=KEY2ROW(key); byte col=KEY2COL(key);
         btnPress[row][col]++;
         
-        DEBUG_PRINT("Key pressed");
-        DEBUG_PRINTF("    row:%d",row);
-        DEBUG_PRINTF("    col:%d",col);
+        DEBUG_PRINTF("-- Key : %d",key);
+        DEBUG_PRINTF2("   Logical coordinates : %d,%d",row,col);
+        DEBUG_PRINTF2("   Physical coordinates: %d,%d",ROW2ADDR(row),COL2ADDR(col));
         
         ledMatrix.ledSetAllOff();
         ledMatrix.ledSetState(row,col,standardColors[btnPress[row][col]%4]);
