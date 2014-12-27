@@ -54,7 +54,7 @@ void initTilt() {
 //=================================================================================
 void loopTilt(bool tiltLoop) {
   
-  int tiltVolume;
+  //int tiltVolume;
   
   while(1) {
 
@@ -94,22 +94,22 @@ void loopTilt(bool tiltLoop) {
         if(y<-100 && row>0)            { row--; moved=true; }
         if(y<-100 && row==0 && !moved) { row=ROWS-1; moved=true; }
       
-  //      if(x<-100)                    { col++; col=col%ROWS; moved=true; }
-  //      if(x>100 && col>0)            { col--; moved=true; }
-  //      if(x>100 && col==0 && !moved) { col=ROWS-1; moved=true; }
-        if(x>100)                    { col++; col=col%ROWS; moved=true; }
-        if(x<-100 && col>0)            { col--; moved=true; }
-        if(x<-100 && col==0 && !moved) { col=ROWS-1; moved=true; }
+        if(x<-100)                    { col++; col=col%ROWS; moved=true; }
+        if(x>100 && col>0)            { col--; moved=true; }
+        if(x>100 && col==0 && !moved) { col=ROWS-1; moved=true; }
+        //if(x>100)                    { col++; col=col%ROWS; moved=true; }
+        //if(x<-100 && col>0)            { col--; moved=true; }
+        //if(x<-100 && col==0 && !moved) { col=ROWS-1; moved=true; }
       }
       // Here, we stop on borders
       else {
         if(y>100 && row<ROWS-1)  { row++; moved=true; }
         if(y<-100 && row>0)      { row--; moved=true; }
   
-  //      if(x<-100 && col<COLS-1) { col++; moved=true; }
-  //      if(x>100 && col>0)       { col--; moved=true; }
-        if(x<-100 && col>0)      { col--; moved=true; }
-        if(x>100 && col<COLS-1)  { col++; moved=true; }
+        if(x<-100 && col<COLS-1) { col++; moved=true; }
+        if(x>100 && col>0)       { col--; moved=true; }
+        //if(x<-100 && col>0)      { col--; moved=true; }
+        //if(x>100 && col<COLS-1)  { col++; moved=true; }
       }
       
       if(moved) {
