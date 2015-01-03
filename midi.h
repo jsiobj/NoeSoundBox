@@ -15,6 +15,7 @@
 #define VS1053_GM1_BRIGHT_ACOUSTIC_PIANO 2
 #define VS1053_GM1_ACOUSTIC_GUITAR_NYLON 25
 #define VS1053_GM1_ELECTRIC_GUITAR_JAZZ 27
+#define VS1053_GM1_ACOUSTIC_BASS 27
 #define VS1053_GM1_ELECTRIC_BASS_FINGER 34
 #define VS1053_GM1_VIOLIN 41
 #define VS1053_GM1_OCARINA 80
@@ -32,7 +33,7 @@
 #define MIDI_CHAN_VOLUME 0x07
 #define MIDI_CHAN_PROGRAM 0xC0
 
-#define MIDI_MAX_CHANNEL 5
+#define MIDI_MAX_CHANNEL 7
 
 void midiSetInstrument(uint8_t chan, uint8_t inst);
 void midiSetChannelVolume(uint8_t chan, uint8_t vol);

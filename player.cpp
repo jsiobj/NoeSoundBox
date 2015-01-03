@@ -21,7 +21,7 @@
 #include "player.h"
 
 #define DEFAULT_VOLUME 60
-#define MAX_VOLUME 0              // Because smaller is louder
+#define MAX_VOLUME     40              // Because smaller is louder
 
 // Track name is build like this : TRACK_ROOT/<bank>/TRACK_PREFIX<track no>.TRACK_EXT
 #define TRACK_PREFIX "track"
@@ -260,9 +260,13 @@ void loopPlayer(int option) {
     long volKnobMove = encoder->getValue();
     if (volKnobMove) {
       volume=volume-volKnobMove;
-      if(volume<0) volume=0; if(volume>254) volume=254;
+      if(volume<MAX_VOLUME) volume=MAX_VOLUME; if(volume>254) volume=255;
       musicPlayer.setVolume(volume,volume);   // Left and right channel volume (lower number mean louder)
       DEBUG_PRINTF("Volume set to %d",volume);
+      analogWrite(ENCODER_RED,volume);
+      analogWrite(ENCODER_GREEN,volume);
+      analogWrite(ENCODER_BLUE,volume);
+
     }
 
     // If player button pressed, pausing...

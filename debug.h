@@ -26,16 +26,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #ifdef DEBUG
   
+      //Serial.print('|');                    \
+      //Serial.print(__FILE__);               \
+      //Serial.print(':');                    \
+      //Serial.println(__LINE__);             \
+
   #define DEBUG_PRINTF(str,val)          \
       Serial.print(millis());            \
       Serial.print("|");                 \
       Serial.print(__PRETTY_FUNCTION__); \
       Serial.print('|');                 \
       Serial.printf(str,val);            \
-      Serial.print('|');                 \
-      Serial.print(__FILE__);            \
-      Serial.print(':');                 \
-      Serial.println(__LINE__);          
+      Serial.println();
   
   #define DEBUG_PRINTF3(str,val1,val2,val3) \
       Serial.print(millis());               \
@@ -43,10 +45,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
       Serial.print(__PRETTY_FUNCTION__);    \
       Serial.print('|');                    \
       Serial.printf(str,val1,val2,val3);    \
-      Serial.print('|');                    \
-      Serial.print(__FILE__);               \
-      Serial.print(':');                    \
-      Serial.println(__LINE__);          
+      Serial.println();
 
   #define DEBUG_PRINTF2(str,val1,val2)   \
       Serial.print(millis());            \
@@ -54,10 +53,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
       Serial.print(__PRETTY_FUNCTION__); \
       Serial.print('|');                 \
       Serial.printf(str,val1,val2);      \
-      Serial.print('|');                 \
-      Serial.print(__FILE__);            \
-      Serial.print(':');                 \
-      Serial.println(__LINE__);          
+      Serial.println();
 
   #define DEBUG_PRINT(str)               \
       Serial.print(millis());            \
@@ -65,25 +61,22 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
       Serial.print(__PRETTY_FUNCTION__); \
       Serial.print('|');                 \
       Serial.print(str);                 \
-      Serial.print('|');                 \
-      Serial.print(__FILE__);            \
-      Serial.print(':');                 \
-      Serial.println(__LINE__);          
+      Serial.println();
       
-   #define DEBUG_PRINT_ARRAY(array,arrayName,size)      \
+  #define DEBUG_PRINT_ARRAY(array,arrayName,size)      \
       Serial.printf("Array:%s|size:%d",arrayName,size); \
       Serial.println();                                 \
       for(int z=0;z<size;z++)  {                        \
         Serial.print("    "); Serial.print(z);          \
         Serial.print(":"); Serial.println(array[z]);    \
-      }                                                 
-   
+      }                                                    
+}
    
 #else
   #define DEBUG_PRINT(str)
   #define DEBUG_PRINTF(str,val)
-  #define DEBUG_PRINTF2(str,val)
-  #define DEBUG_PRINTF3(str,val)
+  #define DEBUG_PRINTF2(str,val1,val2)
+  #define DEBUG_PRINTF3(str,val1,val2,val3)
   #define DEBUG_PRINT_ARRAY(array,arrayName,arraySize)
 #endif
 

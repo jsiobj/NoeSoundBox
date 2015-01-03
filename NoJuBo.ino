@@ -4,7 +4,7 @@
   All In One test program
 */
 
-#define DEBUG
+//#define DEBUG
 #include "debug.h"
 
 #include <Keypad.h>           // For keypad management
@@ -61,16 +61,10 @@ char hexaKeys[ROWS][COLS] = {
   {'8', '9', 'A', 'B'},
   {'C', 'D', 'E', 'F'}
 };
-/*char hexaKeys[ROWS][COLS] = {
-  {'3', '2', '1', '0'},
-  {'7', '6', '5', '4'},
-  {'B', 'A', '9', '8'},
-  {'F', 'E', 'D', 'C'}
-};*/
 
 byte pinBtn[ROWS]       = {22,23,24,25}; // Buttons rows
 byte pinBtnGnd[COLS]    = {26,28,30,32}; // Buttons cols
-byte customPinLedRGB[ROWS][3] = {{11,10,9},{8,7,6},{5,3,2},{44,45,46}}; // LEDs rows
+byte customPinLedRGB[ROWS][3] = {{11,9,10},{8,6,7},{5,2,3},{44,46,45}}; // LEDs rows
 byte customPinLedGnd[COLS]    = {27,29,31,33}; // LEDs cols
 
 // Creation of needed objects
