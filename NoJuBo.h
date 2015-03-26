@@ -69,9 +69,13 @@
 #define OPTION_LED_BLINK     300 // Matrix leds blinking period for option selection
 
 // Standard colors
-#define COLOR_RED   0
-#define COLOR_GREEN 1
-#define COLOR_BLUE  2
-#define COLOR_WHITE 6
+#define COLOR_RED    0
+#define COLOR_GREEN  1
+#define COLOR_BLUE   2
+#define COLOR_YELLOW 3
+#define COLOR_PURPLE 4
+#define COLOR_CYAN   5
+#define COLOR_WHITE  6
+#define COLOR_ORANGE 7
 
 #endif

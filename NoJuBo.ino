@@ -4,7 +4,7 @@
   All In One test program
 */
 
-//#define DEBUG
+#define DEBUG
 #include "debug.h"
 
 #include <Keypad.h>           // For keypad management
@@ -37,7 +37,7 @@ byte standardColors[][3] =  {
   {255, 0  , 255},
   {0  , 255, 255},
   {255, 255, 255},
-  {150, 12 , 210}
+  {255, 165, 0  }
 };
 
 boolean SDStarted=false; // Let know if SD already started
@@ -346,10 +346,11 @@ void loop() {
     
       // Encoder reading
       encValue = encoder->getValue();
-      if (encValue) {
-        encPos += encValue;
-        Serial.print("Encoder Value: "); Serial.println(encValue);
-        Serial.printf("R:%3d | G:%3d | B:%3d\n",red,green,blue);
+      encPos += encValue;
+      if (abs(encPos)>3) {
+        encPos=0;
+        DEBUG_PRINTF("Encoder Value: %d",encValue);
+        DEBUG_PRINTF3("R:%3d | G:%3d | B:%3d\n",red,green,blue);
         
         if(red==0) { red=255; green=0; blue=255; }
         else if(green==0) { red=255; green=255; blue=0; }

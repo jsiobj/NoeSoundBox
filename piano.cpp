@@ -1,7 +1,7 @@
 /*
     PIANO mode related code.
 */
-//#define DEBUG
+#define DEBUG
 #include "debug.h"
 
 #include <Keypad.h>
@@ -12,7 +12,7 @@
 #include <Adafruit_VS1053.h>
 #include <SD.h>
 #include <avr/wdt.h>
-#include <ClickEncoder>
+#include <ClickEncoder.h>
 #include <TimerOne.h>
 
 #include <InteractingObjects_ButtonPad.h>
@@ -23,7 +23,7 @@
 #include "misc.h"
 
 int midiCurrentMap=-1;
-int pianoVolume=127;
+int pianoVolume=100;
 byte pianoOptionList[]={0,1,3,8,12}; // List of available button options for Piano mode, end with 255
 
 // Channel mapping : which bank / instrument on which channel (up to 4 channels)
@@ -194,7 +194,7 @@ void loopPiano() {
 //  int volKnobOldPos=0;
 //  boolean restart=false;
 
-  DEBUG_PRINTF("Volume:%d",pianoVolume);
+  DEBUG_PRINTF("Before loop, Volume:%d",pianoVolume);
   
   while(1) {
     

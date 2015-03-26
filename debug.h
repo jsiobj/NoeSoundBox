@@ -22,7 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef DEBUGUTILS_H
 #define DEBUGUTILS_H
 
-#include <WProgram.h>
+#include <Arduino.h>
 
 #ifdef DEBUG
   
@@ -36,7 +36,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
       Serial.print("|");                 \
       Serial.print(__PRETTY_FUNCTION__); \
       Serial.print('|');                 \
-      Serial.printf(str,val);            \
+      Serial.print(str);                 \
+      Serial.print('|');                 \
+      Serial.print(val);                 \
       Serial.println();
   
   #define DEBUG_PRINTF3(str,val1,val2,val3) \
@@ -44,7 +46,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
       Serial.print("|");                    \
       Serial.print(__PRETTY_FUNCTION__);    \
       Serial.print('|');                    \
-      Serial.printf(str,val1,val2,val3);    \
+      Serial.print(str);                    \
+      Serial.print('|');                    \
+      Serial.print(val1);                   \
+      Serial.print('|');                    \
+      Serial.print(val2);                   \
+      Serial.print('|');                    \
+      Serial.print(val3);                   \
       Serial.println();
 
   #define DEBUG_PRINTF2(str,val1,val2)   \
@@ -52,7 +60,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
       Serial.print("|");                 \
       Serial.print(__PRETTY_FUNCTION__); \
       Serial.print('|');                 \
-      Serial.printf(str,val1,val2);      \
+      Serial.print(str);                    \
+      Serial.print('|');                    \
+      Serial.print(val1);                   \
+      Serial.print('|');                    \
+      Serial.print(val2);                   \
       Serial.println();
 
   #define DEBUG_PRINT(str)               \
@@ -63,14 +75,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
       Serial.print(str);                 \
       Serial.println();
       
-  #define DEBUG_PRINT_ARRAY(array,arrayName,size)      \
-      Serial.printf("Array:%s|size:%d",arrayName,size); \
+  #define DEBUG_PRINT_ARRAY(array,arrayName,size)       \
+      Serial.print("Array:%s|size:%d");                 \
+      Serial.print(arrayName);                          \
+      Serial.print(size);                               \
       Serial.println();                                 \
       for(int z=0;z<size;z++)  {                        \
         Serial.print("    "); Serial.print(z);          \
         Serial.print(":"); Serial.println(array[z]);    \
       }                                                    
-}
    
 #else
   #define DEBUG_PRINT(str)
