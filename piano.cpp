@@ -166,7 +166,7 @@ void initPiano(int option) {
     analogWrite(ENCODER_BLUE,pianoVolume*2);
     
     for(int i=0;i<MIDI_MAX_CHANNEL;i++) {
-      DEBUG_PRINTF3("Channel:%d|Bank:%d|Instrument:%d",i,midiChannelMaps[i][0],midiChannelMaps[i][1])
+      DEBUG_PRINTF3("Channel|Bank|Instrument",i,midiChannelMaps[i][0],midiChannelMaps[i][1])
       midiSetChannelBank(i, midiChannelMaps[i][0]);
       midiSetInstrument(i, midiChannelMaps[i][1]);
     }
@@ -185,11 +185,9 @@ void onKeyPressedPiano(int keyCode) {
   byte row=KEY2ROW(keyCode);
   byte col=KEY2COL(keyCode);
 
-  DEBUG_PRINTF3("-- Key:%2d| row:%2d| col:%2d",keyCode,row,col);
-  //DEBUG_PRINTF2("   Addr2:  div:%2d|mod:%d",keyCode/ROWS,keyCode%COLS);
-  //DEBUG_PRINTF2("   Addr3:  div:%2d|mod:%d",KEY2ROW(keyCode),KEY2COL(keyCode));
-  DEBUG_PRINTF2("   Addr:   row:%2d|col:%d",ROW2ADDR(row),COL2ADDR(col));
-  DEBUG_PRINTF3("   Map:%d|Bank:%d|Note:%d",midiCurrentMap,midiMaps[midiCurrentMap][keyCode][0],midiMaps[midiCurrentMap][keyCode][1]); 
+  DEBUG_PRINTF3("-- Key|row|col",keyCode,row,col);
+  DEBUG_PRINTF2("   Addr:   row|col",ROW2ADDR(row),COL2ADDR(col));
+  DEBUG_PRINTF3("   Map|Bank|Note",midiCurrentMap,midiMaps[midiCurrentMap][keyCode][0],midiMaps[midiCurrentMap][keyCode][1]); 
   
   ledMatrix.matrixLedSetRandom(row,col);  
   midiNoteOn(midiMaps[midiCurrentMap][keyCode][0], midiMaps[midiCurrentMap][keyCode][1], pianoVolume);
@@ -225,7 +223,7 @@ void loopPiano() {
 //  int volKnobOldPos=0;
 //  boolean restart=false;
 
-  DEBUG_PRINTF("Before loop, Volume:%d",pianoVolume);
+  DEBUG_PRINTF("Before loop, Volume",pianoVolume);
   
   while(1) {
     
@@ -235,28 +233,11 @@ void loopPiano() {
       pianoVolume=pianoVolume+volKnobMove;
       if(pianoVolume<0) pianoVolume=0; if(pianoVolume>127) pianoVolume=127;
       for(int i=0;i<MIDI_MAX_CHANNEL;i++) midiSetChannelVolume(i, pianoVolume);
-      DEBUG_PRINTF("Volume set to %d",pianoVolume);
-      
-//      int red,green,blue;
+      DEBUG_PRINTF("Volume set to",pianoVolume);
       
       analogWrite(ENCODER_RED,pianoVolume*2);
       analogWrite(ENCODER_GREEN,pianoVolume*2);
       analogWrite(ENCODER_BLUE,pianoVolume*2);
-
-//      if(pianoVolume>64) {
-//        red=256-(pianoVolume-64)*4;
-//        green=(pianoVolume-64)*4;
-//        blue=255;
-//      }
-//      else {
-//        red=255;
-//        green=(64-pianoVolume)*4;
-//        blue=256-(64-pianoVolume)*4;
-//      }
-      //DEBUG_PRINTF3("RGB:%3d,%3d,%3d",red,green,blue);
-      //analogWrite(ENCODER_RED,red);
-      //analogWrite(ENCODER_GREEN,green);
-      //analogWrite(ENCODER_BLUE,blue);
     }      
 
     // If player button pressed, pausing...

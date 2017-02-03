@@ -35,7 +35,11 @@
 #ifndef PLAYER_H
 #define PLAYER_H
 
-void initPlayer(int option);
+#define PLAYER_OK 0
+#define PLAYER_NOSD 1
+#define PLAYER_ERR 2
+
+int initPlayer(int option);
 void loopPlayer(int option);
 void onKeyPressed_Player(int keyCode,int bank);
 void printPlayerStatus();

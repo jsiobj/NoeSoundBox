@@ -97,10 +97,6 @@ void buildTrackName(int track,char *trackName) {
   tmpTrackName.concat(TRACK_EXT);
 
   tmpTrackName.toCharArray(trackName,STRING_BUFFER_SIZE);
-  /*DEBUG_PRINTF("Track name length:%d",STRING_BUFFER_SIZE);
-  DEBUG_PRINTF("Track name       :%s",tmpTrackName);
-  
-  DEBUG_PRINTF("Track name:%s",trackName);*/
 }
 
 //-------------------------------------------------------------------------
@@ -123,14 +119,14 @@ byte* playerGetOptionList(int* size) {
 
   File root = SD.open(TRACK_ROOT);
 
-  DEBUG_PRINTF("Track root directory: %s",TRACK_ROOT);
+  DEBUG_PRINTF("Track root directory",TRACK_ROOT);
   #ifdef DEBUG
   printDirectory(root, 0);
   #endif
   
   for(int bank=0;bank<ROWS*COLS;bank++) {
     buildBankPath(bank,bankPath);
-    DEBUG_PRINTF("Bank path:%s",bankPath);
+    DEBUG_PRINTF("Bank path",bankPath);
     if(SD.exists(bankPath)) {
       DEBUG_PRINT("----> FOUND !");
       playerOptionList[bankCount]=bank;
@@ -138,7 +134,7 @@ byte* playerGetOptionList(int* size) {
     }
   }
   root.close();
-  DEBUG_PRINTF("  BankCount  :%d",bankCount);
+  DEBUG_PRINTF("  BankCount  ",bankCount);
 
   *size=bankCount;
   DEBUG_PRINT_ARRAY(playerOptionList,"playerOptionList",ARRAY_LENGTH(playerOptionList));
@@ -155,7 +151,7 @@ byte getBankFiles(byte bank) {
   for(int track=0;track<ROWS*COLS;track++) {
 
     buildTrackPath(bank,track,trackPath);
-    DEBUG_PRINTF("Track name: %s",trackPath);
+    DEBUG_PRINTF("Track name",trackPath);
 
     if(SD.exists(trackPath)) {
       DEBUG_PRINT("----> FOUND !");
@@ -175,17 +171,23 @@ void printPlayerStatus() {
 }
 
 //-------------------------------------------------------------------------
-void initPlayer(int option) {
+// Return player and SD state
+// status = 0 if everything is ok
+// status = 1 if can't init SD
+// status = 2 if cant init VS1053 
+int initPlayer(int option) {
     
+  int status=PLAYER_OK;
   DEBUG_PRINT("Setting VS1053 in PLAYER mode");
-  //DEBUG_PRINTF("Free RAM: %d",freeRam());
+  //DEBUG_PRINTF("Free RAM",freeRam());
   digitalWrite(BOOT_M0DE_PIN,LOW);  // Setting pin connected to GPIO1 and VS1053 to LOW..
   VS1053.reset();                   // ... and resetting
 
   DEBUG_PRINT("Starting player");
   if (!musicPlayer.begin()) {
     DEBUG_PRINT("Couldn't find VS1053");
-    while(1);
+    return PLAYER_ERR;
+    //while(1);
     //resetArduino();
   }
 
@@ -198,18 +200,20 @@ void initPlayer(int option) {
   }
   else {
     DEBUG_PRINT("Cannot start (or restart ?) SD");
+    status=PLAYER_NOSD;
   }
   
   // Configuring music player
   //musicPlayer.setVolume(DEFAULT_VOLUME, DEFAULT_VOLUME);   // Left and right channel volume (lower number mean louder)
   musicPlayer.useInterrupt(VS1053_FILEPLAYER_PIN_INT);
+  return status;
 }
 
 //-------------------------------------------------------------------------
 void onKeyPressed_Player(int keyCode, int bank) {
   char trackName[STRING_BUFFER_SIZE];
   
-  //DEBUG_PRINTF("Free RAM: %d",freeRam());
+  //DEBUG_PRINTF("Free RAM",freeRam());
   printPlayerStatus();
   
   if(ledMatrix.matrixLedGetState(keyCode)==OFF) {              // Nothing associated with this key
@@ -223,7 +227,7 @@ void onKeyPressed_Player(int keyCode, int bank) {
   if(musicPlayer.stopped()) {                                     // Nothing is currently playing
     ledMatrix.matrixLedSetState(keyCode,standardColors[COLOR_GREEN]);
     buildTrackPath(bank,keyCode,trackName);
-    DEBUG_PRINTF("Starting %s",trackName);
+    DEBUG_PRINTF("Starting track",trackName);
     //musicPlayer.playFullFile(trackName);
     VS1053.softReset();    // Try to fix "hanging"
     musicPlayer.startPlayingFile(trackName);
@@ -248,8 +252,8 @@ void onKeyPressed_Player(int keyCode, int bank) {
           ledMatrix.matrixLedSetState(playerCurrentTrackNo,standardColors[COLOR_ORANGE]);
           musicPlayer.stopPlaying();
           buildTrackPath(bank,keyCode,trackName);
-          DEBUG_PRINTF("Stopping previous & starting %s",trackName);
-          VS1053.softReset();    // Try to fix "hanging"
+          DEBUG_PRINTF("Stopping previous & starting track",trackName);
+          //VS1053.softReset();    // Try to fix "hanging"
           musicPlayer.startPlayingFile(trackName);    
           digitalWrite(LED_PLAYER,HIGH);
         }
@@ -282,7 +286,7 @@ void setVolume(int volume) {
   
   if(volume<MAX_VOLUME) volume=MAX_VOLUME; if(volume>MIN_VOLUME) volume=MIN_VOLUME;
   musicPlayer.setVolume(volume,volume);   // Left and right channel volume (lower number mean louder)
-  DEBUG_PRINTF("Volume set to %d",volume);
+  DEBUG_PRINTF("Volume set to",volume);
   
   if(volume<MID_VOLUME) {
     redValue=0;
@@ -295,7 +299,7 @@ void setVolume(int volume) {
     greenValue=(255-((MIN_VOLUME-volume)*255.0)/(MIN_VOLUME-MID_VOLUME));
   }
   
-  DEBUG_PRINTF3("RGB:%3d|%3d|%3d",redValue,greenValue,blueValue);
+  DEBUG_PRINTF3("RGB",redValue,greenValue,blueValue);
   analogWrite(ENCODER_RED,redValue);
   analogWrite(ENCODER_GREEN,greenValue);
   analogWrite(ENCODER_BLUE,blueValue);
@@ -311,7 +315,7 @@ void loopPlayer(int option) {
   int volume=DEFAULT_VOLUME;  // From 0 (the loudest) to 255 (no sound)
   setVolume(volume);
 
-  DEBUG_PRINTF("Before Piano loop. Volume:%d",volume);
+  DEBUG_PRINTF("Before Piano loop. Volume",volume);
 
   //DEBUG_PRINTF("Free RAM: %d",freeRam());
   getBankFiles(option);
@@ -319,8 +323,6 @@ void loopPlayer(int option) {
   
   while(1) {
 
-    //DEBUG_PRINT("Player loop");
-    
     // If player button pressed, restarting player...
     if(digitalRead(BTN_PLAYER)==LOW) {
       while(digitalRead(BTN_PLAYER)==LOW) 1;

@@ -101,7 +101,7 @@ void loopTilt(bool tiltLoop) {
       tiltVolume=tiltVolume+volKnobMove;
       if(tiltVolume<0) tiltVolume=0; if(tiltVolume>127) tiltVolume=127;
       midiSetChannelVolume(0, tiltVolume);
-      DEBUG_PRINTF("Volume set to %d",tiltVolume);
+      DEBUG_PRINTF("Volume set to",tiltVolume);
     }
 
     int x,y;
@@ -148,12 +148,12 @@ void loopTilt(bool tiltLoop) {
     
         lastTimeMoved=millis();
   
-        DEBUG_PRINTF("Tilt volume:%d",tiltVolume);
+        DEBUG_PRINTF("Tilt volume",tiltVolume);
         DEBUG_PRINT("Accelerometer data & light position");
-        DEBUG_PRINTF("    x: %d",x);
-        DEBUG_PRINTF("    y: %d",y);
-        DEBUG_PRINTF("    row: %d",row);
-        DEBUG_PRINTF("    col: %d",col);
+        DEBUG_PRINTF("    x",x);
+        DEBUG_PRINTF("    y",y);
+        DEBUG_PRINTF("    row",row);
+        DEBUG_PRINTF("    col",col);
       }
       
     }
