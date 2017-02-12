@@ -212,15 +212,16 @@ int initPlayer(int option) {
 //-------------------------------------------------------------------------
 void onKeyPressed_Player(int keyCode, int bank) {
   char trackName[STRING_BUFFER_SIZE];
+
+  ledMatrix.ledSetAllOff();
   
   //DEBUG_PRINTF("Free RAM",freeRam());
   printPlayerStatus();
   
   if(ledMatrix.matrixLedGetState(keyCode)==OFF) {              // Nothing associated with this key
-    ledMatrix.matrixLedSetState(keyCode,standardColors[COLOR_RED]);
-    long now=millis();
-    while(millis()-now<500) ledMatrix.matrixLedRefresh();
-    ledMatrix.matrixLedSetOff(keyCode);
+    ledMatrix.ledSetState(KEY2ROW(keyCode),KEY2COL(keyCode),standardColors[COLOR_RED]);
+    delay(500);
+    ledMatrix.ledSetOff(KEY2ROW(keyCode),KEY2COL(keyCode));
     return;
   }
     
@@ -229,7 +230,7 @@ void onKeyPressed_Player(int keyCode, int bank) {
     buildTrackPath(bank,keyCode,trackName);
     DEBUG_PRINTF("Starting track",trackName);
     //musicPlayer.playFullFile(trackName);
-    VS1053.softReset();    // Try to fix "hanging"
+    //VS1053.softReset();    // Try to fix "hanging"
     musicPlayer.startPlayingFile(trackName);
     digitalWrite(LED_PLAYER,HIGH);
   }
@@ -359,10 +360,14 @@ void loopPlayer(int option) {
           }
        }
     }
-    ledMatrix.matrixLedRefresh();  
-  }
-
+    
+    if(musicPlayer.paused() || musicPlayer.stopped()) { 
+        ledMatrix.matrixLedRefresh();
+    }
+    else { 
+        ledMatrix.ledSetState(KEY2ROW(playerCurrentTrackNo),KEY2COL(playerCurrentTrackNo),standardColors[COLOR_GREEN]);
+    }
+  }  
   musicPlayer.stopPlaying();
-
 }
 
