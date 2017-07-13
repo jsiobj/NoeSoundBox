@@ -40,6 +40,6 @@ void onKeyPressedPiano(int keyCode);
 void onKeyHoldPiano(int keyCode);
 void onKeyReleasedPiano(int keyCode);
 void loopPiano();
-byte* pianoGetOptionList(int* size);
+int* pianoGetOptionList(int* size);
 
 #endif

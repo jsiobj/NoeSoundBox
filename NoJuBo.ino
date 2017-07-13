@@ -1,3 +1,5 @@
+#include <Arduino.h>
+
 /*
   Interacting Objects - Noe's Juke Box Project
   http://www.interactingobjects.com
@@ -76,11 +78,14 @@ int boxMode=BOX_MODE_UNDEF;
 int lastBoxMode=BOX_MODE_UNDEF;
 int boxOption=-1;
 int configured=0;
-byte* validOptionList;
+int* validOptionList;
 int validOptionCount;
 int playerStatus;
 
-long volKnobOldPos  = 0;  // 
+int playerLibrary=-1;
+int playerBank=-1;
+
+long volKnobOldPos  = 0;  //
 int volume=100;           // From 0 to 100%
 
 // Key mapping for keypad library. Key hexa number
@@ -122,16 +127,16 @@ int selectMode() {
 
   DEBUG_PRINT("Mode selection...");
 
-  while(selectedMode==BOX_MODE_UNDEF) { 
-  
+  while(selectedMode==BOX_MODE_UNDEF) {
+
     // Blinking all status leds if mode not yet selected
     if(millis()-lastToggle>MODE_LED_BLINK) {
       if(playerStatus == PLAYER_OK) digitalWrite(LED_PLAYER,!digitalRead(LED_PLAYER));
       if(playerStatus != PLAYER_ERR) digitalWrite(LED_PIANO,!digitalRead(LED_PIANO));
       digitalWrite(LED_TILT,!digitalRead(LED_TILT));
       lastToggle=millis();
-    } 
-    
+    }
+
     // Reading button (last wins)
     if(digitalRead(BTN_PLAYER)==LOW && playerStatus == PLAYER_OK) {
       selectedMode=BOX_MODE_PLAYER;
@@ -152,18 +157,25 @@ int selectMode() {
       digitalWrite(LED_PIANO,HIGH);
     }
   }
-  
+
+  delay(500); // Just wait a little bit so the button is properly released
+  DEBUG_PRINTF("Selected mode",selectedMode);
+
   // Know we know the mode, building option list
   switch(selectedMode) {
     case BOX_MODE_PIANO:
+      DEBUG_PRINT("Piano mode: Getting valid options list")
       validOptionList=pianoGetOptionList(&validOptionCount);
       break;
-      
+
     case BOX_MODE_PLAYER:
-      validOptionList=playerGetOptionList(&validOptionCount);
+      DEBUG_PRINT("Player mode: Asking for music library");
+      playerSelectLibrary();
+
       break;
 
     case BOX_MODE_TILT:
+      DEBUG_PRINT("Tilt mode: Getting valid options list");
       validOptionList=tiltGetOptionList(&validOptionCount);
       break;
 
@@ -172,8 +184,7 @@ int selectMode() {
       resetArduino();
       break;
   }
-  
-  DEBUG_PRINTF("Selected mode",selectedMode);
+
   return selectedMode;
 }
 
@@ -184,24 +195,42 @@ int selectMode() {
 // For PLAYER mode, an option will change the music "bank" to play from
 // For TILT mode, selects bounce / no bounce
 //-------------------------------------------------------------------------------
-int selectOption(byte* optionList,int optionCount) {
-  
+int selectOption(int* optionList,int optionCount) {
+
   int selectedOption=-1;            // Selected option
 
   long lastToggle=millis();         // used for led blinking
   byte curOptIdx=0;                 // Current option index for led blinking
-  
+
   boolean validOption=false;
-  
+
   DEBUG_PRINT("Option selection...");
-  
+
   ledMatrix.matrixLedSetAllOff();
   for(int option=0;option<optionCount;option++) ledMatrix.matrixLedSetState(optionList[option],standardColors[COLOR_WHITE]);
-  
-  
+
+
   while(selectedOption==-1) {
 
-    // Make the led matrix blink  
+    // If any button pressed, restarting player on the selected library...
+    if(boxMode == BOX_MODE_PLAYER) {
+      int btn=readButton();
+      if(btn!=-1) {
+        while(digitalRead(btn)==LOW) 1;
+        musicPlayer.stopPlaying();
+        boxOption=-1;
+        playerBank=-1;
+        playerLibrary=button2Library(btn);
+        digitalWrite(LED_PIANO, LOW);
+        digitalWrite(LED_PLAYER, LOW);
+        digitalWrite(LED_TILT, LOW);
+        digitalWrite(library2Led(playerLibrary), HIGH);
+        DEBUG_PRINTF("New library selected",playerLibrary);
+        return -1;
+      }
+    }
+
+    // Make the led matrix blink
     if(millis()-lastToggle>OPTION_LED_BLINK) {
        ledMatrix.matrixLedSetState(optionList[curOptIdx],standardColors[COLOR_WHITE]);
        curOptIdx=(curOptIdx+1)%optionCount;
@@ -213,14 +242,14 @@ int selectOption(byte* optionList,int optionCount) {
     if (kchar) {
       int kcode=hex2dec(kchar);
       DEBUG_PRINTF("Option selected",kcode);
-      
+
       // Checking if button pressed is in the option list.
-      for(int j=0;j<optionCount;j++) 
+      for(int j=0;j<optionCount;j++)
         if(kcode==optionList[j])
           validOption=true;
-      
+
       // If it is, setting the option
-      if(validOption) {  
+      if(validOption) {
         DEBUG_PRINTF("Option is valid",kcode);
         ledMatrix.matrixLedSetState(optionList[curOptIdx],standardColors[COLOR_WHITE]);
         //ledMatrix.matrixLedSetAllOff();
@@ -238,11 +267,11 @@ int selectOption(byte* optionList,int optionCount) {
         while(millis()-now<500) ledMatrix.matrixLedRefresh();
         ledMatrix.matrixLedSetOff(kcode);
         ledMatrix.matrixLedSetState(optionList[curOptIdx],standardColors[COLOR_WHITE]);
-      }          
+      }
     }
     ledMatrix.matrixLedRefresh();
   }
-  
+
   DEBUG_PRINTF("Seletected option",selectedOption);
   return selectedOption;
 }
@@ -269,7 +298,7 @@ void setup() {
   pinMode(BTN_PLAYER,INPUT);
   pinMode(BTN_TILT,INPUT);
   pinMode(BTN_PIANO,INPUT);
-  
+
   digitalWrite(BTN_PLAYER,HIGH);  // Enabling pullup resistor
   digitalWrite(BTN_TILT,HIGH);
   digitalWrite(BTN_PIANO,HIGH);
@@ -279,11 +308,11 @@ void setup() {
   pinMode(ENCODER_RED,OUTPUT);
   pinMode(ENCODER_GREEN,OUTPUT);
   pinMode(ENCODER_BLUE,OUTPUT);
-  
+
   analogWrite(ENCODER_RED,255);
   analogWrite(ENCODER_GREEN,255);
   analogWrite(ENCODER_BLUE,255);
-  
+
   DEBUG_PRINT("Starting up...");
 
   digitalWrite(LED_TILT,HIGH);
@@ -292,11 +321,11 @@ void setup() {
 
   DEBUG_PRINT("Setting highest possible PWM frequency");
   setPWMFreq();
-  
+
   DEBUG_PRINT("Setting encoder");
   encoder = new ClickEncoder(ENCODER_A,ENCODER_B);
   Timer1.initialize(1000);
-  Timer1.attachInterrupt(timerIsr); 
+  Timer1.attachInterrupt(timerIsr);
 
   // Encoder button was pressed upon startup... launching test mode
   if(digitalRead(ENCODER_BTN)==HIGH) {
@@ -311,32 +340,32 @@ void setup() {
 
   DEBUG_PRINT("Starting VS1053");
   VS1053.begin();
-  
+
   DEBUG_PRINT("Starting VS1053 Player");
-  playerStatus=initPlayer(-1);
+  playerStatus=initPlayer();
   switch (playerStatus) {
-    case PLAYER_ERR : 
+    case PLAYER_ERR :
       DEBUG_PRINT("VS1053 error");
       digitalWrite(LED_PIANO,LOW);
       digitalWrite(LED_PLAYER,LOW);
       break;
-      
+
     case PLAYER_NOSD :
       DEBUG_PRINT("SD error");
-      digitalWrite(LED_PLAYER,LOW);   
+      digitalWrite(LED_PLAYER,LOW);
       break;
   }
-  
+
   DEBUG_PRINT("Testing led matrix");
   ledMatrix.ledTestAll(standardColors[COLOR_WHITE]);
-      
+
   DEBUG_PRINT("Getting user mode...");
   boxMode=selectMode();
- 
-  DEBUG_PRINT("Switching status leds off");
+
+  /*DEBUG_PRINT("Switching status leds off");
   digitalWrite(LED_TILT,LOW);
   digitalWrite(LED_PIANO,LOW);
-  digitalWrite(LED_PLAYER,LOW);
+  digitalWrite(LED_PLAYER,LOW);*/
 }
 
 //=================================================================================
@@ -347,10 +376,9 @@ void loop() {
   // Check mode to test all leds and keyboard
   if(boxMode == BOX_MODE_CHECK) {
     // Test mode variable
-    int checkedLed = 0;
     int encValue,encPos;
     byte red=0,blue=255,green=255;
-    
+
     long int btnPress[ROWS][COLS] = { {0,0,0,0},
                                       {0,0,0,0},
                                       {0,0,0,0},
@@ -362,10 +390,10 @@ void loop() {
     byte color_blue[]={0,0,255};
     /*if(checkedLed==0) {
       DEBUG_PRINT("Checking LEDs...");
-      ledMatrix.ledTestMatrix(200); 
+      ledMatrix.ledTestMatrix(200);
       checkedLed=1;
     }*/
-    
+
     // Testing keypad, buttons and encoder
     DEBUG_PRINT("Checking keyboard and encoder, press keys to test or turn encoder to test...");
     // Looping forever... until reset ! (check mode)
@@ -395,20 +423,20 @@ void loop() {
           }
         }
       }
-      
+
       // Keyboard reading
       char customKey=customKeypad.getKey();
       if (customKey){
         char hexKey[]= { '0', 'x', '0', 0 };
-        hexKey[2]=customKey; 
+        hexKey[2]=customKey;
         byte key = strtol(hexKey,0,16);
         byte row=KEY2ROW(key); byte col=KEY2COL(key);
         btnPress[row][col]++;
-        
+
         DEBUG_PRINTF("-- Key",key);
         DEBUG_PRINTF2("   Logical coordinates R/C",row,col);
         DEBUG_PRINTF2("   Physical coordinates R/C",ROW2ADDR(row),COL2ADDR(col));
-        
+
         ledMatrix.ledSetAllOff();
         ledMatrix.ledSetState(row,col,standardColors[btnPress[row][col]%4]);
       }
@@ -421,11 +449,11 @@ void loop() {
         DEBUG_PRINTF("Encoder pos",encPos);
         DEBUG_PRINTF("Encoder Value",encValue);
         DEBUG_PRINTF3("R/G/B",red,green,blue);
-        
+
         if(red==0) { red=255; green=0; blue=255; }
         else if(green==0) { red=255; green=255; blue=0; }
         else if(blue==0) { red=0; green=255; blue=255; }
-        
+
         analogWrite(ENCODER_RED,red);
         analogWrite(ENCODER_GREEN,green);
         analogWrite(ENCODER_BLUE,blue);
@@ -435,36 +463,49 @@ void loop() {
   // Not it test mode, lets run real code
   else {
     // If not done yet, choosing the right option
-    if(boxOption==-1) {
-      boxOption=selectOption(validOptionList,validOptionCount);
-      DEBUG_PRINTF("boxOption",boxOption);
+    while(boxOption==-1) {
       switch (boxMode) {
-        case BOX_MODE_PIANO: 
+        case BOX_MODE_PIANO:
+          boxOption=selectOption(validOptionList,validOptionCount);
+          DEBUG_PRINTF("Piano mode: boxOption",boxOption);
           initPiano(boxOption);
           break;
-    
-        case BOX_MODE_TILT: 
+
+        case BOX_MODE_TILT:
+          boxOption=selectOption(validOptionList,validOptionCount);
+          DEBUG_PRINTF("Tilt mode: boxOption",boxOption);
           initTilt();
           break;
-    
+
         case BOX_MODE_PLAYER:
-          initPlayer(boxOption); 
+          DEBUG_PRINT("Player mode: Building bank list");
+          validOptionList=playerGetOptionList(playerLibrary,&validOptionCount);
+          DEBUG_PRINT("Player mode: Selecting bank")
+          boxOption=selectOption(validOptionList,validOptionCount)+1; // bank numbered from 1 instead of 0
+          if(boxOption!=0) {
+            playerBank=boxOption;
+            DEBUG_PRINTF("Player mode: boxOption",boxOption);
+            initPlayer();
+          }
+          else {
+            boxOption = -1;
+          }
           break;
       }
     }
-  
+
     // Now, starting the right loop, depending on mode
     switch (boxMode) {
-      case BOX_MODE_PIANO: 
+      case BOX_MODE_PIANO:
         loopPiano();
         break;
-  
-      case BOX_MODE_TILT: 
+
+      case BOX_MODE_TILT:
         loopTilt(boxOption);
         break;
-  
-      case BOX_MODE_PLAYER: 
-        loopPlayer(boxOption);
+
+      case BOX_MODE_PLAYER:
+        loopPlayer();
         break;
     }
   }

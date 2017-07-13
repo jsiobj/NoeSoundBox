@@ -39,10 +39,11 @@
 #define PLAYER_NOSD 1
 #define PLAYER_ERR 2
 
-int initPlayer(int option);
-void loopPlayer(int option);
+int initPlayer();
+void loopPlayer();
 void onKeyPressed_Player(int keyCode,int bank);
 void printPlayerStatus();
-byte* playerGetOptionList(int* size);
+void playerSelectLibrary();
+int* playerGetOptionList(int library,int* size);
 
 #endif

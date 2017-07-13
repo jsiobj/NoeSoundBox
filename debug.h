@@ -35,11 +35,6 @@
 #include <Arduino.h>
 
 #ifdef DEBUG
-  
-      //Serial.print('|');                    \
-      //Serial.print(__FILE__);               \
-      //Serial.print(':');                    \
-      //Serial.println(__LINE__);             \
 
   #define DEBUG_PRINTF(str,val)          \
       Serial.print(millis());            \
@@ -50,7 +45,7 @@
       Serial.print('|');                 \
       Serial.print(val);                 \
       Serial.println();
-  
+
   #define DEBUG_PRINTF3(str,val1,val2,val3) \
       Serial.print(millis());               \
       Serial.print("|");                    \
@@ -84,17 +79,18 @@
       Serial.print('|');                 \
       Serial.print(str);                 \
       Serial.println();
-      
+
   #define DEBUG_PRINT_ARRAY(array,arrayName,size)       \
-      Serial.print("Array:%s|size:%d");                 \
+      Serial.print("Array:");                           \
       Serial.print(arrayName);                          \
+      Serial.print("|size:");                           \
       Serial.print(size);                               \
       Serial.println();                                 \
-      for(int z=0;z<size;z++)  {                        \
+      for(byte z=0;z<size;z++)  {                       \
         Serial.print("    "); Serial.print(z);          \
         Serial.print(":"); Serial.println(array[z]);    \
-      }                                                    
-   
+      }
+
 #else
   #define DEBUG_PRINT(str)
   #define DEBUG_PRINTF(str,val)
@@ -104,4 +100,3 @@
 #endif
 
 #endif
-

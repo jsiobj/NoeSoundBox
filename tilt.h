@@ -36,6 +36,6 @@
 
 void initTilt();
 void loopTilt(bool tiltLoop);
-byte* tiltGetOptionList(int* size);
+int* tiltGetOptionList(int* size);
 
 #endif

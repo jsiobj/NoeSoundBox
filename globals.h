@@ -54,7 +54,10 @@ extern boolean SDStarted;
 
 extern int boxMode;
 extern int boxOption;
-extern byte* validOptionList;
+extern int* validOptionList;
 extern int validOptionCount;
+
+extern int playerLibrary;
+extern int playerBank;
 
 #endif

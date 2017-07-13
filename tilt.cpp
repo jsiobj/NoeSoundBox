@@ -35,7 +35,7 @@
 #include "debug.h"
 
 #include <Keypad.h>
-#include <Wire.h> 
+#include <Wire.h>
 #include <I2C.h>
 #include <MMA8453_n0m1.h>
 #include <SPI.h>
@@ -50,7 +50,7 @@
 #include "globals.h"
 #include "midi.h"
 
-byte tiltOptionList[]={0,1}; // List of available button options for Piano mode, end with 255
+int tiltOptionList[]={0,1}; // List of available button options for Piano mode, end with 255
 
 int tiltVolume=127;
 
@@ -59,7 +59,7 @@ byte row=32,col=32,rowPrevious=32,colPrevious=32;
 long int lastTimeMoved;
 const int waitBetweenMove=100; // in ms
 
-byte* tiltGetOptionList(int* size) {
+int* tiltGetOptionList(int* size) {
   DEBUG_PRINT_ARRAY(tiltOptionList,"tiltOptionList",ARRAY_LENGTH(tiltOptionList));
   *size=ARRAY_LENGTH(tiltOptionList);
   return tiltOptionList;
@@ -82,9 +82,9 @@ void initTilt() {
 // What to do in TILT mode
 //=================================================================================
 void loopTilt(bool tiltLoop) {
-  
+
   //int tiltVolume;
-  
+
   while(1) {
 
     // If player button pressed, restarting player...
@@ -94,8 +94,8 @@ void loopTilt(bool tiltLoop) {
       boxOption=-1;
       break;
     }
-  
-    // Controlling volume  
+
+    // Controlling volume
     long volKnobMove = encoder->getValue();
     if (volKnobMove) {
       tiltVolume=tiltVolume+volKnobMove;
@@ -105,24 +105,24 @@ void loopTilt(bool tiltLoop) {
     }
 
     int x,y;
-  
+
     // If we did not move for a while, update accel data
     if(lastTimeMoved<millis()-waitBetweenMove) {
       accel.update();
       x=accel.x();y=accel.y();
     }
-  
+
     if(row<32 && col<32 && lastTimeMoved<millis()-waitBetweenMove) {
-  
+
       boolean moved=false;  // Not moved yet
       rowPrevious=row; colPrevious=col;
-      
+
       // Here we loop around the square edges
       if(tiltLoop) {
         if(y>100)                      { row++; row=row%ROWS; moved=true; }
         if(y<-100 && row>0)            { row--; moved=true; }
         if(y<-100 && row==0 && !moved) { row=ROWS-1; moved=true; }
-      
+
         if(x<-100)                    { col++; col=col%ROWS; moved=true; }
         if(x>100 && col>0)            { col--; moved=true; }
         if(x>100 && col==0 && !moved) { col=ROWS-1; moved=true; }
@@ -134,20 +134,20 @@ void loopTilt(bool tiltLoop) {
       else {
         if(y>100 && row<ROWS-1)  { row++; moved=true; }
         if(y<-100 && row>0)      { row--; moved=true; }
-  
+
         if(x<-100 && col<COLS-1) { col++; moved=true; }
         if(x>100 && col>0)       { col--; moved=true; }
         //if(x<-100 && col>0)      { col--; moved=true; }
         //if(x>100 && col<COLS-1)  { col++; moved=true; }
       }
-      
+
       if(moved) {
         ledMatrix.ledSetOff(rowPrevious,colPrevious);
         ledMatrix.ledSetState(row,col,standardColors[COLOR_WHITE]);
         midiNoteOn(0,75,tiltVolume);
-    
+
         lastTimeMoved=millis();
-  
+
         DEBUG_PRINTF("Tilt volume",tiltVolume);
         DEBUG_PRINT("Accelerometer data & light position");
         DEBUG_PRINTF("    x",x);
@@ -155,19 +155,19 @@ void loopTilt(bool tiltLoop) {
         DEBUG_PRINTF("    row",row);
         DEBUG_PRINTF("    col",col);
       }
-      
+
     }
-    
-  
+
+
     // Reading keyboard
     char customKey=customKeypad.getKey();
     if (customKey){
-  
+
       char hexKey[]= { '0', 'x', '0', 0 };
-      hexKey[2]=customKey; 
+      hexKey[2]=customKey;
       key = strtol(hexKey,0,16);
       row=key/ROWS; col=key%COLS;
-      
+
       //ledResetMatrix();
       ledMatrix.ledSetOff(rowPrevious,colPrevious);
       ledMatrix.ledSetState(row,col,standardColors[COLOR_WHITE]);

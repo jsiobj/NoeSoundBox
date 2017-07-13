@@ -34,11 +34,16 @@
 #ifndef MISC_H
 #define MISC_H
 
-int freeRam(); 
+int freeRam();
 void resetArduino();
 void printDirectory(File dir, int numTabs);
 void setPWMFreq();
 int hex2dec(char hex);
+
+int readButton();
+int button2Led(int btn);
+int button2Library(int btn);
+int library2Led(int library);
 
 #define ARRAY_LENGTH(x) sizeof(x)/sizeof(typeof(*x))
 

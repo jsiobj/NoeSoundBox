@@ -36,7 +36,7 @@
 #include "debug.h"
 
 #include <Keypad.h>
-#include <Wire.h> 
+#include <Wire.h>
 #include <I2C.h>
 #include <MMA8453_n0m1.h>
 #include <SPI.h>
@@ -55,10 +55,10 @@
 
 int midiCurrentMap=-1;
 int pianoVolume=100;
-byte pianoOptionList[]={0,1,3,8,12}; // List of available button options for Piano mode, end with 255
+int pianoOptionList[]={0,1,3,8,12}; // List of available button options for Piano mode, end with 255
 
 // Channel mapping : which bank / instrument on which channel (up to 4 channels)
-// Looks like 
+// Looks like
 // - DEFAUT and MELODY are the same...
 // - DRUM1 & 2 are also the same...
 // - When DRUMS, notes select instrument
@@ -72,10 +72,10 @@ int midiChannelMaps[MIDI_MAX_CHANNEL][2] = {
   /* Channel 5 */ {VS1053_BANK_DEFAULT, VS1053_GM1_ELECTRIC_BASS_FINGER},
   /* Channel 6 */ {VS1053_BANK_DEFAULT, VS1053_GM1_ACOUSTIC_BASS}
 };
-  
+
 // Midi mappings for each key, 1st number is channel, 2nd number is note
 int midiMaps[][16][2] =  {
-  
+
   // 0 Acoustic Guitar
   { {0,77},{0,76},{0,74},{0,72},
     {0,84},{0,83},{0,81},{0,79},
@@ -93,7 +93,7 @@ int midiMaps[][16][2] =  {
   // 2 ...
   {
   },
-  
+
   // 3 Drums on 1st row, then Piano
   { {2,81},{2,57},{2,75},{2,72},
     {0,77},{0,76},{0,74},{0,72},
@@ -145,14 +145,14 @@ int midiMaps[][16][2] =  {
 
 };
 
-byte* pianoGetOptionList(int* size) {
+int* pianoGetOptionList(int* size) {
   DEBUG_PRINT_ARRAY(pianoOptionList,"pianoOptionList",ARRAY_LENGTH(pianoOptionList));
   *size=ARRAY_LENGTH(pianoOptionList);
   return pianoOptionList;
 }
 
 void initPiano(int option) {
-    
+
     DEBUG_PRINT("Setting VS1053 in MIDI mode");
     digitalWrite(LED_PIANO,HIGH);
     digitalWrite(BOOT_M0DE_PIN,HIGH); // Setting pin connected to GPIO1 and VS1053 to HIGH...
@@ -164,7 +164,7 @@ void initPiano(int option) {
     analogWrite(ENCODER_RED,pianoVolume*2);
     analogWrite(ENCODER_GREEN,pianoVolume*2);
     analogWrite(ENCODER_BLUE,pianoVolume*2);
-    
+
     for(int i=0;i<MIDI_MAX_CHANNEL;i++) {
       DEBUG_PRINTF3("Channel|Bank|Instrument",i,midiChannelMaps[i][0],midiChannelMaps[i][1])
       midiSetChannelBank(i, midiChannelMaps[i][0]);
@@ -172,9 +172,9 @@ void initPiano(int option) {
     }
 
     midiCurrentMap=option;
-    
+
     ledMatrix.matrixLedSetAllRandom();
-    
+
     // Play a few notes, just check
     // testMidi();
 
@@ -187,9 +187,9 @@ void onKeyPressedPiano(int keyCode) {
 
   DEBUG_PRINTF3("-- Key|row|col",keyCode,row,col);
   DEBUG_PRINTF2("   Addr:   row|col",ROW2ADDR(row),COL2ADDR(col));
-  DEBUG_PRINTF3("   Map|Bank|Note",midiCurrentMap,midiMaps[midiCurrentMap][keyCode][0],midiMaps[midiCurrentMap][keyCode][1]); 
-  
-  ledMatrix.matrixLedSetRandom(row,col);  
+  DEBUG_PRINTF3("   Map|Bank|Note",midiCurrentMap,midiMaps[midiCurrentMap][keyCode][0],midiMaps[midiCurrentMap][keyCode][1]);
+
+  ledMatrix.matrixLedSetRandom(row,col);
   midiNoteOn(midiMaps[midiCurrentMap][keyCode][0], midiMaps[midiCurrentMap][keyCode][1], pianoVolume);
 }
 
@@ -198,7 +198,7 @@ void onKeyHoldPiano(int keyCode) {
   byte row=KEY2ROW(keyCode);
   byte col=KEY2COL(keyCode);
 
-  if(ledMatrix.matrixLedGetState(row,col)==ON) ledMatrix.matrixLedLock(row,col);  
+  if(ledMatrix.matrixLedGetState(row,col)==ON) ledMatrix.matrixLedLock(row,col);
 
 }
 
@@ -208,9 +208,9 @@ void onKeyReleasedPiano(int keyCode) {
   byte col=KEY2COL(keyCode);
 
   //midiNoteOff(midiMaps[midiCurrentMap][keyCode][0], midiMaps[midiCurrentMap][keyCode][1], pianoVolume);
-  
+
   if(ledMatrix.matrixLedGetLockState(row,col)==OFF && ledMatrix.matrixLedGetState(row,col)==ON) {
-    ledMatrix.matrixLedToggleState(row,col,standardColors[4]); 
+    ledMatrix.matrixLedToggleState(row,col,standardColors[4]);
   }
 }
 
@@ -219,26 +219,22 @@ void onKeyReleasedPiano(int keyCode) {
 //=================================================================================
 void loopPiano() {
 
-  long lastToggle;
-//  int volKnobOldPos=0;
-//  boolean restart=false;
-
   DEBUG_PRINTF("Before loop, Volume",pianoVolume);
-  
+
   while(1) {
-    
-    // Controlling volume  
+
+    // Controlling volume
     long volKnobMove = encoder->getValue();
     if (volKnobMove) {
       pianoVolume=pianoVolume+volKnobMove;
       if(pianoVolume<0) pianoVolume=0; if(pianoVolume>127) pianoVolume=127;
       for(int i=0;i<MIDI_MAX_CHANNEL;i++) midiSetChannelVolume(i, pianoVolume);
       DEBUG_PRINTF("Volume set to",pianoVolume);
-      
+
       analogWrite(ENCODER_RED,pianoVolume*2);
       analogWrite(ENCODER_GREEN,pianoVolume*2);
       analogWrite(ENCODER_BLUE,pianoVolume*2);
-    }      
+    }
 
     // If player button pressed, pausing...
     if(digitalRead(BTN_PIANO)==LOW) {
@@ -247,33 +243,33 @@ void loopPiano() {
       boxOption=-1;
       break;
     }
-  
+
     // At least one key state changed i.e. a key was pressed or released
     if (customKeypad.getKeys()){
-      
+
       for (int i=0; i<LIST_MAX; i++)  {
           if ( customKeypad.key[i].stateChanged ) {
-  
+
             switch (customKeypad.key[i].kstate) {  // Report active key state : IDLE, PRESSED, HOLD, or RELEASED
                   case PRESSED:
                     onKeyPressedPiano(customKeypad.key[i].kcode);
                     break;
-                  
+
                   case HOLD:
                     onKeyHoldPiano(customKeypad.key[i].kcode);
                     break;
-                  
+
                   case RELEASED:
                     onKeyReleasedPiano(customKeypad.key[i].kcode);
                     break;
-                  
+
                   case IDLE:
                     break;
             }
           }
        }
     }
-  
+
     ledMatrix.matrixLedRefresh();
   }
  }
