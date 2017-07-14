@@ -34,7 +34,7 @@
 
 */
 
-#define DEBUG
+//#define DEBUG
 #include "debug.h"
 
 #include <Keypad.h>           // For keypad management
@@ -140,21 +140,15 @@ int selectMode() {
     // Reading button (last wins)
     if(digitalRead(BTN_PLAYER)==LOW && playerStatus == PLAYER_OK) {
       selectedMode=BOX_MODE_PLAYER;
-      digitalWrite(LED_PLAYER,HIGH);
-      digitalWrite(LED_TILT,LOW);
-      digitalWrite(LED_PIANO,LOW);
+      digitalWrite(LED_PLAYER,HIGH); digitalWrite(LED_TILT,LOW); digitalWrite(LED_PIANO,LOW);
     }
     if(digitalRead(BTN_TILT)==LOW) {
       selectedMode=BOX_MODE_TILT;
-      digitalWrite(LED_PLAYER,LOW);
-      digitalWrite(LED_TILT,HIGH);
-      digitalWrite(LED_PIANO,LOW);
+      digitalWrite(LED_PLAYER,LOW); digitalWrite(LED_TILT,HIGH); digitalWrite(LED_PIANO,LOW);
     }
     if(digitalRead(BTN_PIANO)==LOW && playerStatus != PLAYER_ERR) {
       selectedMode=BOX_MODE_PIANO;
-      digitalWrite(LED_PLAYER,LOW);
-      digitalWrite(LED_TILT,LOW);
-      digitalWrite(LED_PIANO,HIGH);
+      digitalWrite(LED_PLAYER,LOW); digitalWrite(LED_TILT,LOW); digitalWrite(LED_PIANO,HIGH);
     }
   }
 
@@ -170,7 +164,7 @@ int selectMode() {
 
     case BOX_MODE_PLAYER:
       DEBUG_PRINT("Player mode: Asking for music library");
-      playerSelectLibrary();
+      selectLibrary();
 
       break;
 
@@ -362,6 +356,8 @@ void setup() {
   DEBUG_PRINT("Getting user mode...");
   boxMode=selectMode();
 
+  randomSeed(analogRead(0));
+
   /*DEBUG_PRINT("Switching status leds off");
   digitalWrite(LED_TILT,LOW);
   digitalWrite(LED_PIANO,LOW);
@@ -384,15 +380,9 @@ void loop() {
                                       {0,0,0,0},
                                       {0,0,0,0} };
 
-    // Reading button (last wins) and testing pad colors
     byte color_red[]={255,0,0};
     byte color_green[]={0,255,0};
     byte color_blue[]={0,0,255};
-    /*if(checkedLed==0) {
-      DEBUG_PRINT("Checking LEDs...");
-      ledMatrix.ledTestMatrix(200);
-      checkedLed=1;
-    }*/
 
     // Testing keypad, buttons and encoder
     DEBUG_PRINT("Checking keyboard and encoder, press keys to test or turn encoder to test...");
@@ -479,7 +469,7 @@ void loop() {
 
         case BOX_MODE_PLAYER:
           DEBUG_PRINT("Player mode: Building bank list");
-          validOptionList=playerGetOptionList(playerLibrary,&validOptionCount);
+          validOptionList=getBankList(playerLibrary,&validOptionCount);
           DEBUG_PRINT("Player mode: Selecting bank")
           boxOption=selectOption(validOptionList,validOptionCount)+1; // bank numbered from 1 instead of 0
           if(boxOption!=0) {

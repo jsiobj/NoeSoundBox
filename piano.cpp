@@ -32,7 +32,7 @@
   PIANO mode related code.
 
 */
-#define DEBUG
+//#define DEBUG
 #include "debug.h"
 
 #include <Keypad.h>

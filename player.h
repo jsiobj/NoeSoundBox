@@ -43,7 +43,7 @@ int initPlayer();
 void loopPlayer();
 void onKeyPressed_Player(int keyCode,int bank);
 void printPlayerStatus();
-void playerSelectLibrary();
-int* playerGetOptionList(int library,int* size);
+void selectLibrary();
+int* getBankList(int library,int* size);
 
 #endif

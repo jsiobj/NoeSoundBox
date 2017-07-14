@@ -30,7 +30,7 @@
 
   Code for Player mode
 */
-#define DEBUG
+//#define DEBUG
 #include "debug.h"
 
 #include <Keypad.h>
@@ -60,13 +60,13 @@
 #define TRACK_ROOT   "/music/"
 
 #define PLAYER_MODE_SINGLE 1   // Play selected file
-#define PLAYER_MODE_RANDOM 2   // Random play... Not implemented... yet
+#define PLAYER_MODE_BANK_SHUFFLE 2   // Random play... Not implemented... yet
 #define PLAYER_MODE_BANK   3   // Play all files in selected bank... Not implemented... yet
 
 #define STRING_BUFFER_SIZE 128
 
 int playerCurrentTrackNo=-1;     // Track no currently playing. If -1, no file is playing
-int playerOptionList[COLS*ROWS];
+int playerBankList[COLS*ROWS];
 int playerTrackList[COLS*ROWS];
 int playerMode=PLAYER_MODE_SINGLE;
 
@@ -74,16 +74,14 @@ int playerMode=PLAYER_MODE_SINGLE;
 // Selecting library in case of player mode
 // using the illuminated buttons
 //-------------------------------------------------------------------------------
-void playerSelectLibrary() {
+void selectLibrary() {
 
   long int blinkPeriod=500;
   long int lastToggle=0;
   int btn=-1;
 
   DEBUG_PRINT("Waiting for library selection...");
-  digitalWrite(LED_PLAYER,HIGH);
-  digitalWrite(LED_PIANO,LOW);
-  digitalWrite(LED_TILT,LOW);
+  digitalWrite(LED_PLAYER,HIGH); digitalWrite(LED_PIANO,LOW); digitalWrite(LED_TILT,LOW);
   delay(100);
   lastToggle=millis();
 
@@ -93,18 +91,15 @@ void playerSelectLibrary() {
     // Blinking all status leds if mode not yet selected
     if(millis()-lastToggle>blinkPeriod) {
       if(digitalRead(LED_PLAYER)==HIGH) {
-        digitalWrite(LED_PLAYER,LOW);
-        digitalWrite(LED_PIANO,HIGH);
+        digitalWrite(LED_PLAYER,LOW); digitalWrite(LED_PIANO,HIGH);
       }
       else {
         if(digitalRead(LED_PIANO)==HIGH) {
-          digitalWrite(LED_PIANO,LOW);
-          digitalWrite(LED_TILT,HIGH);
+          digitalWrite(LED_PIANO,LOW); digitalWrite(LED_TILT,HIGH);
         }
         else {
           if(digitalRead(LED_TILT)==HIGH) {
-            digitalWrite(LED_TILT,LOW);
-            digitalWrite(LED_PLAYER,HIGH);
+            digitalWrite(LED_TILT,LOW); digitalWrite(LED_PLAYER,HIGH);
           }
         }
       }
@@ -115,9 +110,7 @@ void playerSelectLibrary() {
     if(btn!=-1) {
       DEBUG_PRINTF("Button pressed",btn);
       playerLibrary=button2Library(btn);
-      digitalWrite(LED_PLAYER,LOW);
-      digitalWrite(LED_TILT,LOW);
-      digitalWrite(LED_PIANO,LOW);
+      digitalWrite(LED_PLAYER,LOW); digitalWrite(LED_TILT,LOW); digitalWrite(LED_PIANO,LOW);
       digitalWrite(button2Led(btn),HIGH);
       return;
     }
@@ -175,22 +168,20 @@ void buildBankPath(int library, int bank,char *bankPath) {
 }
 
 //-------------------------------------------------------------------------
-int* playerGetOptionList(int library, int* size) {
+// Build bank list in selected library
+int* getBankList(int library, int* size) {
   char bankPath[STRING_BUFFER_SIZE];
   int bankCount=0;
 
   File root = SD.open(TRACK_ROOT);
 
   DEBUG_PRINTF("Track root directory",TRACK_ROOT);
-  /*#ifdef DEBUG
-  printDirectory(root, 0);
-  #endif*/
 
   for(int bank=1;bank<=ROWS*COLS;bank++) {
     buildBankPath(library,bank,bankPath);
     if(SD.exists(bankPath)) {
       DEBUG_PRINTF("Bank path added",bankPath);
-      playerOptionList[bankCount]=bank-1;
+      playerBankList[bankCount]=bank-1;
       bankCount++;
     }
     else {
@@ -201,12 +192,11 @@ int* playerGetOptionList(int library, int* size) {
   DEBUG_PRINTF("BankCount",bankCount);
 
   *size=bankCount;
-  //DEBUG_PRINT_ARRAY(playerOptionList,"playerOptionList",ARRAY_LENGTH(playerOptionList));
-  return playerOptionList;
+  return playerBankList;
 }
 
 //-------------------------------------------------------------------------
-int getBankFiles(int library, int bank) {
+int getBankFiles(int library, int bank, int* trackList) {
   char trackPath[STRING_BUFFER_SIZE];
   int trackCount=0;
 
@@ -218,6 +208,7 @@ int getBankFiles(int library, int bank) {
 
     if(SD.exists(trackPath)) {
       DEBUG_PRINTF("Track added",trackPath);
+      trackList[trackCount]=track;
       ledMatrix.matrixLedSetState(track-1,standardColors[COLOR_WHITE]); // -1 because tracks numbered from 1 instead of 0
       trackCount++;
     }
@@ -227,13 +218,6 @@ int getBankFiles(int library, int bank) {
   }
   root.close();
   return trackCount;
-}
-
-//-------------------------------------------------------------------------
-void printPlayerStatus() {
-  //DEBUG_PRINTF("Player status | playerCurrentTrackNo       : ",playerCurrentTrackNo);
-  //DEBUG_PRINTF("              | Playing                    : ",musicPlayer.playingMusic);
-  //DEBUG_PRINTF("              | Paused                     : ",musicPlayer.paused());
 }
 
 //-------------------------------------------------------------------------
@@ -281,9 +265,6 @@ void onKeyPressed_Player(int keyCode, int library, int bank) {
 
   ledMatrix.ledSetAllOff();
 
-  //DEBUG_PRINTF("Free RAM",freeRam());
-  printPlayerStatus();
-
   if(ledMatrix.matrixLedGetState(keyCode)==OFF) {              // Nothing associated with this key
     ledMatrix.ledSetState(KEY2ROW(keyCode),KEY2COL(keyCode),standardColors[COLOR_RED]);
     delay(500);
@@ -295,8 +276,6 @@ void onKeyPressed_Player(int keyCode, int library, int bank) {
     ledMatrix.matrixLedSetState(keyCode,standardColors[COLOR_GREEN]);
     buildTrackPath(library,bank,keyCode+1,trackName); // +1 because tracks numbered from 1 instead of 0
     DEBUG_PRINTF("Starting track",trackName);
-    //musicPlayer.playFullFile(trackName);
-    //VS1053.softReset();    // Try to fix "hanging"
     musicPlayer.startPlayingFile(trackName);
     digitalWrite(library2Led(playerLibrary),HIGH);
   }
@@ -320,7 +299,6 @@ void onKeyPressed_Player(int keyCode, int library, int bank) {
           musicPlayer.stopPlaying();
           buildTrackPath(library,bank,keyCode+1,trackName); // +1 because tracks numbered from 1 instead of 0
           DEBUG_PRINTF("Stopping previous & starting track",trackName);
-          //VS1053.softReset();    // Try to fix "hanging"
           musicPlayer.startPlayingFile(trackName);
           digitalWrite(library2Led(playerLibrary),HIGH);
         }
@@ -329,7 +307,6 @@ void onKeyPressed_Player(int keyCode, int library, int bank) {
   }
 
   playerCurrentTrackNo=keyCode;
-  printPlayerStatus();
 }
 
 //-------------------------------------------------------------------------
@@ -380,29 +357,66 @@ void loopPlayer() {
 
   long lastToggle=0;
   int volume=DEFAULT_VOLUME;  // From 0 (the loudest) to 255 (no sound)
+  int bankTrackCount;
+
+  playerMode = PLAYER_MODE_SINGLE;
   setVolume(volume);
 
   DEBUG_PRINTF("Before Piano loop. Volume",volume);
-  getBankFiles(playerLibrary,playerBank);
+  bankTrackCount=getBankFiles(playerLibrary,playerBank,playerTrackList);
 
-  digitalWrite(LED_PIANO, LOW);
-  digitalWrite(LED_PLAYER, LOW);
-  digitalWrite(LED_TILT, LOW);
+  // Switching on the illuminated button corresponding to selected library
+  digitalWrite(LED_PIANO, LOW); digitalWrite(LED_PLAYER, LOW); digitalWrite(LED_TILT, LOW);
   digitalWrite(library2Led(playerLibrary), HIGH);
 
   while(1) {
 
-    // If any button pressed, restarting player on the selected library...
+    // If encoder button is pressed and nothing is playing, starting random playing
+    if(digitalRead(ENCODER_BTN)==HIGH) {
+
+      // Wait until released
+      while (digitalRead(ENCODER_BTN)==HIGH);
+
+      // Toggling mode
+      if(playerMode!=PLAYER_MODE_BANK_SHUFFLE) {
+        DEBUG_PRINT("Entering bank shuffle play mode");
+        playerMode = PLAYER_MODE_BANK_SHUFFLE;
+      }
+      else {
+        DEBUG_PRINT("Going back to single track play mode");
+        playerMode = PLAYER_MODE_SINGLE;
+      }
+    }
+
+    // Random mode and nothing is playing
+    if(playerMode==PLAYER_MODE_BANK_SHUFFLE && musicPlayer.stopped()) {
+
+      int trackNo = playerCurrentTrackNo;
+      long int randomInt=random(0,bankTrackCount-1);
+
+      ledMatrix.ledSetAllOff();
+
+      while (trackNo == playerCurrentTrackNo) trackNo = playerTrackList[randomInt];
+      playerCurrentTrackNo = trackNo;
+
+      ledMatrix.matrixLedSetState(playerCurrentTrackNo,standardColors[COLOR_PURPLE]);
+      ledMatrix.ledSetState(KEY2ROW(playerCurrentTrackNo),KEY2COL(playerCurrentTrackNo),standardColors[COLOR_GREEN]);
+
+      char trackName[STRING_BUFFER_SIZE];
+      buildTrackPath(playerLibrary,playerBank,trackNo+1,trackName); // +1 because tracks numbered from 1 instead of 0
+      DEBUG_PRINTF("Starting random track",trackName);
+      musicPlayer.startPlayingFile(trackName);
+      digitalWrite(library2Led(playerLibrary),HIGH);
+    }
+
+    // If any illuminated button pressed, restarting player on the selected library...
     int btn=readButton();
     if(btn!=-1) {
       while(digitalRead(btn)==LOW) 1;
       musicPlayer.stopPlaying();
-      boxOption=-1;
-      playerBank=-1;
+      boxOption=-1; playerBank=-1;
       playerLibrary=button2Library(btn);
-      digitalWrite(LED_PIANO, LOW);
-      digitalWrite(LED_PLAYER, LOW);
-      digitalWrite(LED_TILT, LOW);
+      digitalWrite(LED_PIANO, LOW); digitalWrite(LED_PLAYER, LOW); digitalWrite(LED_TILT, LOW);
       digitalWrite(library2Led(playerLibrary), HIGH);
 
       DEBUG_PRINTF("Restarting player on library",playerLibrary);
@@ -438,11 +452,21 @@ void loopPlayer() {
        }
     }
 
+    // If paused or stop, switch on all matrix
+    // - green means already played
+    // - blue (signle) and purple (random) means paused
+    // - orange means not played fully
     if(musicPlayer.paused() || musicPlayer.stopped()) {
         ledMatrix.matrixLedRefresh();
     }
+    // When playing, switch on the led matching the track currently playing
     else {
-        ledMatrix.ledSetState(KEY2ROW(playerCurrentTrackNo),KEY2COL(playerCurrentTrackNo),standardColors[COLOR_GREEN]);
+        if(playerMode==PLAYER_MODE_BANK_SHUFFLE) {
+          ledMatrix.ledSetState(KEY2ROW(playerCurrentTrackNo),KEY2COL(playerCurrentTrackNo),standardColors[COLOR_PURPLE]);
+        }
+        else {
+          ledMatrix.ledSetState(KEY2ROW(playerCurrentTrackNo),KEY2COL(playerCurrentTrackNo),standardColors[COLOR_GREEN]);
+        }
     }
   }
   musicPlayer.stopPlaying();
